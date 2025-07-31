@@ -73,7 +73,6 @@ app.post("/register", async (req, res) => {
 //вход
 app.post("/login", async (req, res) => {
     const { username, email, password } = req.body; //извлекаем данные пользователя из тела запроса
-
     db.get(
         "select * from users where username=? or email=?",
         [username, email],
