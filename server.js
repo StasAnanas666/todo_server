@@ -205,13 +205,19 @@ app.put("/tasks/complete/:id", authenticateToken, async (req, res) => {
 
 //удаление задачи
 app.delete("/tasks/:id", authenticateToken, async (req, res) => {
-    const { id } = req.params; //получаем параметр из адресной строки
-    db.run("delete from tasks where id=?", [id], async (err) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
-        }
-        return res.json({ message: "Задача удалена" });
-    });
+    if (req.user.role === "admin") {
+        const { id } = req.params; //получаем параметр из адресной строки
+        db.run("delete from tasks where id=?", [id], async (err) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            return res.json({ message: "Задача удалена" });
+        });
+    } else {
+        return res
+            .status(403)
+            .json({ message: "Доступ только для администраторов" });
+    }
 });
 
 //запуск прослушивания сервера
