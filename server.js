@@ -104,7 +104,7 @@ app.post("/login", async (req, res) => {
                             role: role.role,
                         },
                         secret,
-                        { expiresIn: "5m" }
+                        { expiresIn: "1h" }
                     );
                     res.json({
                         token,
@@ -141,28 +141,31 @@ const authenticateToken = (req, res, next) => {
 
 //получение всех задач
 app.get("/tasks", authenticateToken, async (req, res) => {
-    db.all("select * from tasks", (err, tasks) => {
-        if (err) {
-            return res.status(500).json({ error: err.message });
+    db.all(
+        "select t.*, u.username from tasks t left join users u on t.userid = u.id",
+        (err, tasks) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            return res.json(tasks);
         }
-        return res.json(tasks);
-    });
+    );
 });
 
 //добавление задачи
-app.post("/tasks", authenticateToken, async (req, res) => {
+app.post("/tasks", authenticateToken, (req, res) => {
     if (req.user.role === "admin") {
         const { title, deadline, priority } = req.body; //извлекаем данные задачи из тела запроса
         db.run(
             "insert into tasks(title, deadline, priority) values(?,?,?)",
             [title, deadline, priority],
-            async (err) => {
+            (err) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 }
-                return res
-                    .status(201)
-                    .json({ message: "Новая задача успешно добавлена" });
+                return res.status(201).json({
+                    message: "Новая задача успешно добавлена",
+                });
             }
         );
     } else {
