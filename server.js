@@ -86,7 +86,7 @@ app.post("/login", async (req, res) => {
                 user.password
             );
             if (!isPasswordValid) {
-                return res.status(400).json({ message: "Неверный пароль" });
+                return res.status(400).json({ error: "Неверный пароль" });
             }
             //получаем названием роли пользователя
             db.get(
@@ -159,19 +159,25 @@ app.post("/tasks", authenticateToken, (req, res) => {
         db.run(
             "insert into tasks(title, deadline, priority) values(?,?,?)",
             [title, deadline, priority],
-            (err) => {
+            function (err) {
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 }
                 return res.status(201).json({
-                    message: "Новая задача успешно добавлена",
+                    message: `Новая задача успешно добавлена`,
+                    todo: {
+                        id: this.lastID,
+                        title: title,
+                        deadline: deadline,
+                        priority: priority,
+                    },
                 });
             }
         );
     } else {
         return res
             .status(403)
-            .json({ message: "Доступ только для администраторов" });
+            .json({ error: "Доступ только для администраторов" });
     }
 });
 
@@ -181,11 +187,11 @@ app.put("/tasks/active/:id", authenticateToken, async (req, res) => {
     db.run(
         "update tasks set status=?, userid=? where id=?",
         ["in-progress", req.user.id, id],
-        async (err) => {
+        async function (err) {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            return res.json({ message: "Задача взята в работу" });
+            return res.json({ message: "Задача взята в работу", id: this.lastID });
         }
     );
 });
@@ -218,7 +224,7 @@ app.delete("/tasks/:id", authenticateToken, async (req, res) => {
     } else {
         return res
             .status(403)
-            .json({ message: "Доступ только для администраторов" });
+            .json({ error: "Доступ только для администраторов" });
     }
 });
 
