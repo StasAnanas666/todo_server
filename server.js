@@ -163,15 +163,19 @@ app.post("/tasks", authenticateToken, (req, res) => {
                 if (err) {
                     return res.status(500).json({ error: err.message });
                 }
-                return res.status(201).json({
-                    message: `Новая задача успешно добавлена`,
-                    todo: {
-                        id: this.lastID,
-                        title: title,
-                        deadline: deadline,
-                        priority: priority,
-                    },
-                });
+                db.get(
+                    "select t.*, u.username from tasks t left join users u on t.userid = u.id where t.id = ?",
+                    [this.lastID],
+                    function (err, todo) {
+                        if (err) {
+                            return res.status(500).json({ error: err.message });
+                        }
+                        return res.status(201).json({
+                            message: `Новая задача успешно добавлена`,
+                            todo: todo,
+                        });
+                    }
+                );
             }
         );
     } else {
@@ -191,7 +195,19 @@ app.put("/tasks/active/:id", authenticateToken, async (req, res) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            return res.json({ message: "Задача взята в работу", id: this.lastID });
+            db.get(
+                "select t.*, u.username from tasks t left join users u on t.userid = u.id where t.id = ?",
+                [id],
+                function (err, todo) {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    return res.status(201).json({
+                        message: "Задача взята в работу",
+                        todo: todo,
+                    });
+                }
+            );
         }
     );
 });
@@ -206,7 +222,19 @@ app.put("/tasks/complete/:id", authenticateToken, async (req, res) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            return res.json({ message: "Задача завершена" });
+            db.get(
+                "select t.*, u.username from tasks t left join users u on t.userid = u.id where t.id = ?",
+                [id],
+                function (err, todo) {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    return res.status(201).json({
+                        message: "Задача завершена",
+                        todo: todo,
+                    });
+                }
+            );
         }
     );
 });
@@ -219,7 +247,7 @@ app.delete("/tasks/:id", authenticateToken, async (req, res) => {
             if (err) {
                 return res.status(500).json({ error: err.message });
             }
-            return res.json({ message: "Задача удалена" });
+            return res.json({ message: "Задача удалена", id });
         });
     } else {
         return res
